@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoceLune - O sabor que adoça os seus melhores momentos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navegação -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="assets/LOGO.jpg" alt="DoceLune">
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#home">Início</a></li>
+                <li><a href="#sobre">Sobre</a></li>
+                <li><a href="#cardapio">Cardápio</a></li>
+                <li><a href="#avaliacoes">Avaliações</a></li>
+                <li><a href="#contato">Contato</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="cart-btn" onclick="toggleCart()">
+                    <span class="cart-icon">🛒</span>
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+                <div class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Carrinho Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Seu Pedido</h3>
+            <button class="close-cart" onclick="toggleCart()">
+                ✕
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Itens do carrinho serão inseridos aqui -->
+        </div>
+        <div class="cart-footer">
+            <div class="frete-section">
+                <h4>Calcular Frete</h4>
+                <div class="frete-input-group">
+                    <input type="text" id="cepInput" placeholder="Digite seu CEP (ex: 01234-567)" class="frete-input" maxlength="9">
+                    <button onclick="calcularFrete()" class="frete-btn">
+                        📊
+                        Calcular
+                    </button>
+                </div>
+                <div class="frete-result" id="freteResult" style="display: none;">
+                    <p>Frete: R$ <span id="freteValue">0,00</span>
+                        <button onclick="removerFrete()" class="remove-frete-btn" title="Remover frete">✕</button>
+                    </p>
+                </div>
+            </div>
+            <div class="cart-totals">
+                <div class="subtotal">
+                    Subtotal: R$ <span id="cartSubtotal">0,00</span>
+                </div>
+                <div class="frete-total" id="freteTotal" style="display: none;">
+                    Frete: R$ <span id="freteDisplay">0,00</span>
+                </div>
+                <div class="cart-total">
+                    <strong>Total: R$ <span id="cartTotal">0,00</span></strong>
+                </div>
+            </div>
+            <button class="whatsapp-btn" onclick="sendToWhatsApp()">
+                📱
+                Fazer Pedido
+            </button>
+        </div>
+    </div>
+
+    <!-- Header/Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>DoceLune</h1>
+                <p class="hero-subtitle">O sabor que adoça os seus melhores momentos</p>
+                <p class="hero-description">Transformamos doces em verdadeiras experiências, unindo sabor, estética e cuidado em cada detalhe.</p>
+                <a href="#cardapio" class="cta-button">Ver Cardápio</a>
+            </div>
+            <div class="hero-image">
+                <img src="assets/Mascote_Final_DOCELUNE-removebg-preview.png" alt="DoceLune">
+            </div>
+        </div>
+        <div class="hero-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </section>
+
+    <!-- Sobre Section -->
+    <section id="sobre" class="sobre">
+        <div class="container">
+            <div class="sobre-content">
+                <div class="sobre-text">
+                    <h2>Quem Somos</h2>
+                    <p>Na DoceLune transformamos doces em verdadeiras experiências. Nosso compromisso é oferecer produtos de qualidade, unindo sabor, estética e cuidado em cada detalhe.</p>
+                    <p>Mais do que uma confeitaria, queremos adoçar momentos especiais e tornar cada pedacinho inesquecível.</p>
+                    <div class="destaque">
+                        ⭐
+                        <span>Trabalhamos apenas sob encomenda para garantir sempre a melhor qualidade e frescor dos nossos doces.</span>
+                    </div>
+                </div>
+                <div class="sobre-images">
+                    <img src="assets/muitos_pedidos.jpg" alt="Produção DoceLune" class="sobre-img-1">
+                    <img src="assets/Img1.webp" alt="Produtos DoceLune" class="sobre-img-2">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cardápio Section -->
+    <section id="cardapio" class="cardapio">
+        <div class="container">
+            <h2>Nosso Cardápio</h2>
+            
+            <!-- Brigadeiros -->
+            <div class="categoria">
+                <h3>Brigadeiros</h3>
+                <div class="produtos-grid">
+                    <div class="produto-card">
+                        <img src="assets/brigadeiro.jpg" alt="Brigadeiro Tradicional">
+                        <div class="produto-info">
+                            <h4>Brigadeiro Unitário</h4>
+                            <p>Diversos sabores disponíveis</p>
+                            <div class="produto-preco">R$ 3,00</div>
+                            <button class="add-to-cart" onclick="addToCart('Brigadeiro Unitário', 3.00, 'assets/brigadeiro.jpg')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="produto-card">
+                        <img src="assets/brigadeiro_colorido.jpg" alt="Caixinha 4 unidades">
+                        <div class="produto-info">
+                            <h4>Caixinha 4 unidades</h4>
+                            <p>Brigadeiros especiais em caixinha</p>
+                            <div class="produto-preco">R$ 12,00</div>
+                            <button class="add-to-cart" onclick="addToCart('Caixinha 4 unidades', 12.00, 'assets/brigadeiro_colorido.jpg')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="produto-card">
+                        <img src="assets/beijinho.jpg" alt="Caixinha 6 unidades">
+                        <div class="produto-info">
+                            <h4>Caixinha 6 unidades</h4>
+                            <p>Brigadeiros especiais em caixinha</p>
+                            <div class="produto-preco">R$ 18,00</div>
+                            <button class="add-to-cart" onclick="addToCart('Caixinha 6 unidades', 18.00, 'assets/beijinho.jpg')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="produto-card">
+                        <img src="assets/brigadeiro.jpg" alt="50 Brigadeiros">
+                        <div class="produto-info">
+                            <h4>50 Brigadeiros</h4>
+                            <p>Pedido em maior quantidade</p>
+                            <div class="produto-preco">R$ 75,00</div>
+                            <button class="add-to-cart" onclick="addToCart('50 Brigadeiros', 75.00, 'assets/brigadeiro.jpg')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="produto-card">
+                        <img src="assets/brigadeiro_colorido.jpg" alt="100 Brigadeiros">
+                        <div class="produto-info">
+                            <h4>100 Brigadeiros</h4>
+                            <p>Cento de brigadeiros (até 4 sabores)</p>
+                            <div class="produto-preco">R$ 150,00</div>
+                            <button class="add-to-cart" onclick="addToCart('100 Brigadeiros', 150.00, 'assets/brigadeiro_colorido.jpg')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bolos de Pote -->
+            <div class="categoria">
+                <h3>Bolos de Pote</h3>
+                <div class="produtos-grid">
+                    <div class="produto-card">
+                        <img src="assets/bolo_de_pote.png" alt="Bolo de Pote Pequeno">
+                        <div class="produto-info">
+                            <h4>Bolo de Pote Pequeno</h4>
+                            <p>220ml - Cenoura com brigadeiro</p>
+                            <div class="produto-preco">R$ 14,00</div>
+                            <button class="add-to-cart" onclick="addToCart('Bolo de Pote Pequeno', 14.00, 'assets/bolo_de_pote.png')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="produto-card">
+                        <img src="assets/bolo_de_pote.png" alt="Bolo de Pote Grande">
+                        <div class="produto-info">
+                            <h4>Bolo de Pote Grande</h4>
+                            <p>550ml - Cenoura com brigadeiro</p>
+                            <div class="produto-preco">R$ 20,00</div>
+                            <button class="add-to-cart" onclick="addToCart('Bolo de Pote Grande', 20.00, 'assets/bolo_de_pote.png')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doces com Morango -->
+            <div class="categoria">
+                <h3>Doces com Morango</h3>
+                <div class="produtos-grid">
+                    <div class="produto-card">
+                        <img src="assets/Morango_Do_Amor.jpg" alt="Coxinha de Morango">
+                        <div class="produto-info">
+                            <h4>Coxinha de Morango</h4>
+                            <p>Deliciosa coxinha de morango</p>
+                            <div class="produto-preco">R$ 10,00</div>
+                            <button class="add-to-cart" onclick="addToCart('Coxinha de Morango', 10.00, 'assets/Morango_Do_Amor.jpg')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="produto-card">
+                        <img src="assets/Morango_Do_Amor.jpg" alt="Coração de Morango">
+                        <div class="produto-info">
+                            <h4>Coração de Morango</h4>
+                            <p>Morango do amor especial</p>
+                            <div class="produto-preco">R$ 20,00</div>
+                            <button class="add-to-cart" onclick="addToCart('Coração de Morango', 20.00, 'assets/Morango_Do_Amor.jpg')">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Avaliações Section -->
+    <section id="avaliacoes" class="avaliacoes">
+        <div class="container">
+            <h2>O que nossos clientes dizem</h2>
+            <div class="avaliacoes-carousel">
+                <div class="avaliacoes-track" id="avaliacoesTrack">
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Muito obrigada ❤ Os brigadeiros estão muito gostosos"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Estava delicioso Parabéns Bia"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Disse que estava uma delícia Parabéns você é muito caprichosa"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Delicioso! Amei! Parabéns! Td lindo, bom embalado e gostoso!! Amamos!!"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Obgdd amei parabéns pelo trabalho meninass!!💕💕"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Que coisa incrível Adoramos aqui 🥰"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Tá incrível de bommmm Arrasou muito"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Tava uma delícia viu, seu brigadeiro eh incrível e a casquinha tava bem fininha"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Parabéns Bia seu morango do amor é muito bom. Bjs"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Biaaa, eu amei. Que delícia Parabéns Bia, que capricho!"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Bia ! Que delicia 🤤 maravilhoso Parabéns pelo capricho! Adorei 🥰"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Minha mãe comprou o morango com você E meu Eu amei muito Arrasou Sério"</p>
+                    </div>
+
+                    <div class="avaliacao-card">
+                        <div class="stars">
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                            ⭐
+                        </div>
+                        <p>"Bibia eu amei mtt!! Tava uma delícia viu, seu brigadeiro eh incrível e a casquinha tava bem fininha"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contato Section -->
+    <section id="contato" class="contato">
+        <div class="container">
+            <h2>Entre em Contato</h2>
+            <p>Esperamos que goste do nosso trabalho!</p>
+            <div class="contato-buttons">
+                <a href="https://wa.me/5511985580560" target="_blank" class="contact-btn whatsapp">
+                    📱
+                    (11) 98558-0560
+                </a>
+                <a href="https://instagram.com/docelune_" target="_blank" class="contact-btn instagram">
+                    📷
+                    @docelune_
+                </a>
+            </div>
+            <div class="payment-info">
+                <h3>Condições de Pagamento</h3>
+                <p><strong>PIX:</strong> (11) 98558-0560</p>
+                <p><strong>Dinheiro</strong> na entrega</p>
+                <p><strong>Frete:</strong> R$ 0,80 por quilômetro (ida e volta)</p>
+                <p>Para encomendas maiores: 50% na encomenda + 50% na retirada</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="assets/LOGO.jpg" alt="DoceLune">
+                    <p>O sabor que adoça os seus melhores momentos</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="#home">Início</a></li>
+                        <li><a href="#sobre">Sobre</a></li>
+                        <li><a href="#cardapio">Cardápio</a></li>
+                        <li><a href="#avaliacoes">Avaliações</a></li>
+                        <li><a href="#contato">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contato</h4>
+                    <p>📱 (11) 98558-0560</p>
+                    <p>📷 @docelune_</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 DoceLune. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
+
