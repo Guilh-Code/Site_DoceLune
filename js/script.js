@@ -325,11 +325,26 @@ function updateCartDisplay() {
         cart.forEach(item => {
             const cartItem = document.createElement('div');
             cartItem.className = 'cart-item';
-            cartItem.innerHTML = `
+            
+            // Criar HTML base do item
+            let itemHTML = `
                 <img src="${item.image}" alt="${item.name}">
                 <div class="cart-item-info">
                     <h4>${item.name}</h4>
                     <div class="cart-item-price">R$ ${item.price.toFixed(2).replace('.', ',')}</div>
+            `;
+            
+            // Adicionar sabores se existirem
+            if (item.saboresTexto) {
+                itemHTML += `
+                    <div class="cart-item-sabores" style="background: #f0f8ff; padding: 8px; border-radius: 5px; margin: 8px 0; font-size: 0.85rem;">
+                        <strong>Sabores:</strong><br>
+                        ${item.saboresTexto}
+                    </div>
+                `;
+            }
+            
+            itemHTML += `
                     <div class="quantity-controls">
                         <button class="quantity-btn" onclick="updateQuantity('${item.name}', -1)">
                             -
@@ -344,6 +359,8 @@ function updateCartDisplay() {
                     </div>
                 </div>
             `;
+            
+            cartItem.innerHTML = itemHTML;
             cartItems.appendChild(cartItem);
         });
         
@@ -381,280 +398,9 @@ function updateCartDisplay() {
     cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
 }
 
-// Função para calcular frete por CEP
-async function calcularFrete() {
-    const cepInput = document.getElementById('cepInput');
-    const cep = cepInput.value.trim().replace(/\D/g, ''); // Remove caracteres não numéricos
-    
-    if (!cep || cep.length !== 8) {
-        showToast('Por favor, digite um CEP válido (8 dígitos)', 'error');
-        return;
-    }
-    
-    // Mostrar loading
-    const freteBtn = document.querySelector('.frete-btn');
-    const originalText = freteBtn.innerHTML;
-    freteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculando...';
-    freteBtn.disabled = true;
-    
-    try {
-        // CEP da cliente DoceLune (Bia)
-        const cepOrigem = '03461080'; // CEP da Bia sem hífen
-        
-        // Verificar se é o mesmo CEP da origem (frete grátis)
-        if (cep === cepOrigem) {
-            freteValue = 0;
-            
-            // Mostrar resultado de frete grátis
-            document.getElementById('freteResult').style.display = 'block';
-            document.getElementById('freteResult').innerHTML = `
-                <div style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 15px; margin-top: 10px;">
-                    <strong style="color: #2e7d32;">🎉 Frete GRÁTIS!</strong>
-                    <button onclick="removerFrete()" class="remove-frete-btn" title="Remover frete">✕</button><br>
-                    <span style="color: #666; font-size: 0.9rem;">Entrega no mesmo local da confeitaria</span>
-                </div>
-            `;
-            
-            updateCartDisplay();
-            showToast('Frete grátis! Mesmo local da confeitaria', 'success');
-            
-            // Salvar CEP do cliente para usar no WhatsApp
-            localStorage.setItem('docelune_cliente_cep', cep);
-            
-            // Restaurar botão
-            freteBtn.innerHTML = originalText;
-            freteBtn.disabled = false;
-            return;
-        }
-        
-        // Primeiro verificar se o CEP é de São Paulo - SP
-        const viaCepResponse = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-        const viaCepData = await viaCepResponse.json();
-        
-        if (viaCepData.erro) {
-            throw new Error('CEP não encontrado');
-        }
-        
-        // Verificar se é de São Paulo - SP (onde a Bia atende)
-        if (viaCepData.localidade.toLowerCase() !== 'são paulo' || viaCepData.uf.toLowerCase() !== 'sp') {
-            // Mostrar mensagem de área não atendida
-            document.getElementById('freteResult').style.display = 'block';
-            document.getElementById('freteResult').innerHTML = `
-                <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px; margin-top: 10px;">
-                    <i class="fas fa-exclamation-triangle" style="color: #f44336; margin-right: 8px;"></i>
-                    <strong style="color: #f44336;">Área de entrega não atendida</strong><br>
-                    <span style="color: #666; font-size: 0.9rem;">Realizamos entregas apenas na região de São Paulo - SP, próximo ao Jardim Vila Formosa</span>
-                </div>
-            `;
-            freteValue = 0;
-            updateCartDisplay();
-            showToast('Entregas apenas em São Paulo - SP', 'error');
-            
-            // Restaurar botão
-            freteBtn.innerHTML = originalText;
-            freteBtn.disabled = false;
-            return;
-        }
-        
-        // Buscar coordenadas dos CEPs
-        const coordOrigem = await buscarCoordenadasPorCEP(cepOrigem);
-        const coordDestino = await buscarCoordenadasPorCEP(cep);
-        
-        if (coordOrigem && coordDestino) {
-            // Calcular distância
-            const distancia = calcularDistanciaHaversine(
-                coordOrigem.lat, coordOrigem.lng,
-                coordDestino.lat, coordDestino.lng
-            );
-            
-            if (distancia >= 0) {
-                // Verificar se a distância está dentro do limite de 30km
-                if (distancia > 30) {
-                    // Mostrar mensagem de distância excedida
-                    document.getElementById('freteResult').style.display = 'block';
-                    document.getElementById('freteResult').innerHTML = `
-                        <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px; margin-top: 10px;">
-                            <i class="fas fa-exclamation-triangle" style="color: #f44336; margin-right: 8px;"></i>
-                            <strong style="color: #f44336;">Não entregamos para esta região</strong><br>
-                            <span style="color: #666; font-size: 0.9rem;">Realizamos entregas apenas em um raio de 30km do CEP 03461-080. Distância: ${distancia.toFixed(1)} km</span>
-                        </div>
-                    `;
-                    freteValue = 0;
-                    updateCartDisplay();
-                    showToast(`Distância de ${distancia.toFixed(1)} km excede o limite de 30km`, 'error');
-                    
-                    // Restaurar botão
-                    freteBtn.innerHTML = originalText;
-                    freteBtn.disabled = false;
-                    return;
-                }
-                
-                // Frete = R$ 0,80 por km (ida e volta)
-                freteValue = distancia * 0.80 * 2; // Multiplicar por 2 para ida e volta
-                
-                // Mostrar resultado
-                document.getElementById('freteResult').style.display = 'block';
-                document.getElementById('freteResult').innerHTML = `
-                    <div style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 15px; margin-top: 10px;">
-                        <strong style="color: #2e7d32;">Frete: R$ ${freteValue.toFixed(2).replace('.', ',')}</strong>
-                        <button onclick="removerFrete()" class="remove-frete-btn" title="Remover frete">✕</button><br>
-                        <span style="color: #666; font-size: 0.9rem;">Distância aproximada: ${distancia.toFixed(1)} km (ida e volta)</span>
-                    </div>
-                `;
-                
-                updateCartDisplay();
-                showToast(`Frete calculado: R$ ${freteValue.toFixed(2).replace('.', ',')}`, 'success');
-                
-                // Salvar CEP do cliente para usar no WhatsApp
-                localStorage.setItem('docelune_cliente_cep', cep);
-            } else {
-                throw new Error('Não foi possível calcular a distância');
-            }
-        } else {
-            throw new Error('CEP não encontrado');
-        }
-    } catch (error) {
-        console.error('Erro ao calcular frete:', error);
-        showToast('CEP não encontrado ou erro no cálculo. Verifique o CEP digitado.', 'error');
-        
-        // Limpar resultado anterior
-        document.getElementById('freteResult').style.display = 'none';
-        freteValue = 0;
-        updateCartDisplay();
-    } finally {
-        // Restaurar botão
-        freteBtn.innerHTML = originalText;
-        freteBtn.disabled = false;
-    }
-}
 
-// Função para remover o frete calculado
-function removerFrete() {
-    // Resetar valor do frete
-    freteValue = 0;
-    
-    // Ocultar resultado do frete
-    const freteResult = document.getElementById('freteResult');
-    const freteTotal = document.getElementById('freteTotal');
-    
-    if (freteResult) freteResult.style.display = 'none';
-    if (freteTotal) freteTotal.style.display = 'none';
-    
-    // Limpar campo de CEP
-    const cepInput = document.getElementById('cepInput');
-    if (cepInput) cepInput.value = '';
-    
-    // Remover CEP do localStorage
-    localStorage.removeItem('docelune_cliente_cep');
-    
-    // Atualizar display do carrinho
-    updateCartDisplay();
-    
-    // Mostrar toast de confirmação
-    showToast('Frete removido com sucesso!', 'success');
-}
 
-// Função para buscar coordenadas por CEP usando ViaCEP + OpenStreetMap
-async function buscarCoordenadasPorCEP(cep) {
-    try {
-        // Primeiro, buscar informações do CEP via ViaCEP
-        const viaCepResponse = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-        const viaCepData = await viaCepResponse.json();
-        
-        if (viaCepData.erro) {
-            throw new Error('CEP não encontrado');
-        }
-        
-        // Construir endereço para geocodificação
-        const endereco = `${viaCepData.logradouro}, ${viaCepData.bairro}, ${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
-        
-        // Buscar coordenadas via Nominatim
-        const nominatimResponse = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}&limit=1`
-        );
-        const nominatimData = await nominatimResponse.json();
-        
-        if (nominatimData && nominatimData.length > 0) {
-            return {
-                lat: parseFloat(nominatimData[0].lat),
-                lng: parseFloat(nominatimData[0].lon)
-            };
-        }
-        
-        // Fallback: tentar apenas com cidade e estado
-        const enderecoSimples = `${viaCepData.localidade}, ${viaCepData.uf}, Brasil`;
-        const fallbackResponse = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoSimples)}&limit=1`
-        );
-        const fallbackData = await fallbackResponse.json();
-        
-        if (fallbackData && fallbackData.length > 0) {
-            return {
-                lat: parseFloat(fallbackData[0].lat),
-                lng: parseFloat(fallbackData[0].lon)
-            };
-        }
-        
-        return null;
-    } catch (error) {
-        console.error('Erro ao buscar coordenadas:', error);
-        return null;
-    }
-}
 
-// Função para calcular distância entre dois endereços
-async function calcularDistancia(origem, destino) {
-    try {
-        // Usar API de geocodificação gratuita (OpenStreetMap Nominatim)
-        const coordOrigem = await geocodificar(origem);
-        const coordDestino = await geocodificar(destino);
-        
-        if (coordOrigem && coordDestino) {
-            // Calcular distância usando fórmula de Haversine
-            const distancia = calcularDistanciaHaversine(
-                coordOrigem.lat, coordOrigem.lon,
-                coordDestino.lat, coordDestino.lon
-            );
-            return distancia;
-        }
-        return 0;
-    } catch (error) {
-        console.error('Erro ao calcular distância:', error);
-        return 0;
-    }
-}
-
-// Função para geocodificar endereço
-async function geocodificar(endereco) {
-    try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}&limit=1`);
-        const data = await response.json();
-        
-        if (data && data.length > 0) {
-            return {
-                lat: parseFloat(data[0].lat),
-                lon: parseFloat(data[0].lon)
-            };
-        }
-        return null;
-    } catch (error) {
-        console.error('Erro na geocodificação:', error);
-        return null;
-    }
-}
-
-// Função para calcular distância usando fórmula de Haversine
-function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Raio da Terra em km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distancia = R * c;
-    return distancia;
-}
 
 // Função para enviar pedido para WhatsApp
 function sendToWhatsApp() {
@@ -705,6 +451,12 @@ function sendToWhatsApp() {
         message += `• ${item.name}\n`;
         message += `  Quantidade: ${item.quantity}\n`;
         message += `  Preço unitário: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+        
+        // Adicionar sabores se existirem
+        if (item.saboresTexto) {
+            message += `  Sabores: ${item.saboresTexto}\n`;
+        }
+        
         message += `  Subtotal: R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n\n`;
     });
     
@@ -719,11 +471,6 @@ function sendToWhatsApp() {
     }
     
     message += `💵 *Total do pedido: R$ ${subtotalComPromocao.toFixed(2).replace('.', ',')}*\n\n`;
-    
-    message += '💳 *Condições de Pagamento:*\n';
-    message += '• PIX: (11) 98558-0560\n';
-    message += '• Dinheiro na entrega\n';
-    message += '• Para encomendas maiores: 50% na encomenda + 50% na retirada\n\n';
     
     message += '✨ Obrigado por escolher a DoceLune!';
     
@@ -922,4 +669,299 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+
+
+// Lista de sabores disponíveis
+const saboresDisponiveis = [
+    { id: 'tradicional', nome: 'Tradicional', emoji: '🍫', descricao: 'Brigadeiro de chocolate ao leite com confeito de chocolate ao leite ou colorido' },
+    { id: 'beijinho', nome: 'Beijinho', emoji: '🥥', descricao: 'Brigadeiro de coco, confeitado com açúcar e cravo' },
+    { id: 'bicho_pe', nome: 'Bicho de pé', emoji: '💗', descricao: 'Brigadeiro de Nesquik, confeitado com açúcar' },
+    { id: 'pacoca', nome: 'Paçoca', emoji: '🥜', descricao: 'Brigadeiro de Paçoca, confeitado com Paçoca' },
+    { id: 'chocolate_branco', nome: 'Chocolate Branco', emoji: '🤍', descricao: 'Brigadeiro de chocolate branco com confeito de chocolate branco' },
+    { id: 'churros', nome: 'Churros', emoji: '🍯', descricao: 'Brigadeiro de doce de leite, confeitado com açúcar, canela e doce de leite' },
+    { id: 'ferrero', nome: 'Ferrero Rocher', emoji: '🌰', descricao: 'Brigadeiro de chocolate meio-amargo, confeitado com amendoim e Nutella' },
+    { id: 'ninho_nutella', nome: 'Ninho com Nutella', emoji: '🍼', descricao: 'Brigadeiro de leite Ninho, confeitado com leite Ninho e Nutella' },
+    { id: 'nutella', nome: 'Nutella', emoji: '🍫', descricao: 'Brigadeiro de Nutella, confeitado com chocolate ao leite e Nutella' },
+    { id: 'surpresinha_uva', nome: 'Surpresinha de uva', emoji: '🍇', descricao: 'Brigadeiro de leite Ninho com uva, confeitado com leite Ninho' },
+    { id: 'casadinho', nome: 'Casadinho', emoji: '💑', descricao: 'Brigadeiro de chocolate ao leite e brigadeiro de chocolate branco' },
+    { id: 'casadinho_rosa', nome: 'Casadinho rosa', emoji: '💖', descricao: 'Brigadeiro de Nesquik e brigadeiro de Ninho' },
+    { id: 'oreo', nome: 'Oreo', emoji: '🍪', descricao: 'Brigadeiro de oreo, confeitado com açúcar e oreo' }
+];
+
+// Variáveis para seleção de sabores
+let currentSelection = {
+    name: '',
+    price: 0,
+    image: '',
+    quantity: 0,
+    sabores: {}
+};
+
+// Função para alternar modal de sabores
+function toggleSaboresModal() {
+    const modal = document.getElementById('saboresModal');
+    if (modal.style.display === 'flex') {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    } else {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Função para abrir seleção de sabores
+function openSaboresSelection(name, price, image, quantity) {
+    currentSelection = {
+        name: name,
+        price: price,
+        image: image,
+        quantity: quantity,
+        sabores: {}
+    };
+    
+    const modal = document.getElementById('selecaoSaboresModal');
+    const titulo = document.getElementById('selecaoTitulo');
+    const content = document.getElementById('selecaoSaboresContent');
+    
+    titulo.textContent = `Escolha os sabores para ${name}`;
+    
+    let html = `
+        <div class="total-info">
+            <h4>Total de brigadeiros: ${quantity}</h4>
+            <p>Selecione a quantidade de cada sabor desejado</p>
+            <div id="quantidadeRestante">Restam: <strong>${quantity}</strong> brigadeiros para selecionar</div>
+        </div>
+    `;
+    
+    saboresDisponiveis.forEach(sabor => {
+        html += `
+            <div class="sabor-selector" id="selector-${sabor.id}">
+                <div class="sabor-selector-header">
+                    <h4>${sabor.emoji} ${sabor.nome}</h4>
+                    <input type="number" 
+                           class="quantity-input" 
+                           id="qty-${sabor.id}" 
+                           min="0" 
+                           max="${quantity}" 
+                           value="0"
+                           onchange="updateSaborQuantity('${sabor.id}', this.value)">
+                </div>
+                <p>${sabor.descricao}</p>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    updateQuantidadeRestante();
+}
+
+// Função para atualizar quantidade de sabor
+function updateSaborQuantity(saborId, quantidade) {
+    const qty = parseInt(quantidade) || 0;
+    
+    if (qty > 0) {
+        currentSelection.sabores[saborId] = qty;
+        document.getElementById(`selector-${saborId}`).classList.add('selected');
+    } else {
+        delete currentSelection.sabores[saborId];
+        document.getElementById(`selector-${saborId}`).classList.remove('selected');
+    }
+    
+    updateQuantidadeRestante();
+}
+
+// Função para atualizar quantidade restante
+function updateQuantidadeRestante() {
+    const totalSelecionado = Object.values(currentSelection.sabores).reduce((sum, qty) => sum + qty, 0);
+    const restante = currentSelection.quantity - totalSelecionado;
+    
+    const restanteDiv = document.getElementById('quantidadeRestante');
+    if (restanteDiv) {
+        restanteDiv.innerHTML = `Restam: <strong>${restante}</strong> brigadeiros para selecionar`;
+        
+        if (restante < 0) {
+            restanteDiv.style.color = '#f44336';
+            restanteDiv.innerHTML += ' <br><small>⚠️ Você selecionou mais brigadeiros do que o permitido!</small>';
+        } else if (restante === 0) {
+            restanteDiv.style.color = '#4caf50';
+            restanteDiv.innerHTML += ' <br><small>✅ Perfeito! Todos os brigadeiros foram selecionados.</small>';
+        } else {
+            restanteDiv.style.color = '#666';
+        }
+    }
+    
+    // Atualizar inputs máximos
+    saboresDisponiveis.forEach(sabor => {
+        const input = document.getElementById(`qty-${sabor.id}`);
+        if (input) {
+            const currentValue = parseInt(input.value) || 0;
+            const maxAllowed = currentValue + restante;
+            input.max = maxAllowed;
+        }
+    });
+    
+    // Habilitar/desabilitar botão confirmar
+    const btnConfirmar = document.querySelector('.btn-confirmar');
+    if (btnConfirmar) {
+        btnConfirmar.disabled = restante !== 0;
+    }
+}
+
+// Função para fechar seleção de sabores
+function closeSelecaoSabores() {
+    const modal = document.getElementById('selecaoSaboresModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    
+    // Limpar seleção
+    currentSelection = {
+        name: '',
+        price: 0,
+        image: '',
+        quantity: 0,
+        sabores: {}
+    };
+}
+
+// Função para confirmar seleção de sabores
+function confirmarSelecaoSabores() {
+    const totalSelecionado = Object.values(currentSelection.sabores).reduce((sum, qty) => sum + qty, 0);
+    
+    if (totalSelecionado !== currentSelection.quantity) {
+        showToast('Por favor, selecione exatamente ' + currentSelection.quantity + ' brigadeiros', 'error');
+        return;
+    }
+    
+    // Criar descrição dos sabores selecionados
+    const saboresTexto = [];
+    Object.entries(currentSelection.sabores).forEach(([saborId, qty]) => {
+        const sabor = saboresDisponiveis.find(s => s.id === saborId);
+        if (sabor && qty > 0) {
+            saboresTexto.push(`${qty}x ${sabor.nome}`);
+        }
+    });
+    
+    // Verificar se o item já existe no carrinho
+    const existingItem = cart.find(item => 
+        item.name === currentSelection.name && 
+        JSON.stringify(item.sabores) === JSON.stringify(currentSelection.sabores)
+    );
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({
+            name: currentSelection.name,
+            price: currentSelection.price,
+            image: currentSelection.image,
+            quantity: 1,
+            sabores: currentSelection.sabores,
+            saboresTexto: saboresTexto.join(', ')
+        });
+    }
+    
+    updateCartDisplay();
+    saveCartToStorage();
+    closeSelecaoSabores();
+    
+    showAddToCartFeedback();
+    showToast(`${currentSelection.name} adicionado ao carrinho!`, 'success');
+}
+
+// Função para contatar via WhatsApp para pedidos grandes
+function contatarWhatsApp(itemName, price) {
+    const mensagem = `Olá! Gostaria de fazer um pedido de *${itemName}* (R$ ${price.toFixed(2).replace('.', ',')}).
+
+Preciso conversar sobre os sabores disponíveis e as quantidades de cada um.
+
+Aguardo seu contato! 😊`;
+    
+    const numeroWhatsApp = '5511985580560';
+    const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+    
+    window.open(url, '_blank');
+}
+
+// Função para mostrar toast (notificação)
+function showToast(message, type = 'info') {
+    // Remover toast existente se houver
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    // Estilos do toast
+    toast.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 3000;
+        font-weight: 500;
+        max-width: 300px;
+        animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 2.7s;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
+// Adicionar estilos de animação para o toast
+const toastStyles = document.createElement('style');
+toastStyles.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(toastStyles);
+
+// Fechar modais ao clicar fora
+document.addEventListener('click', function(e) {
+    const saboresModal = document.getElementById('saboresModal');
+    const selecaoModal = document.getElementById('selecaoSaboresModal');
+    
+    if (e.target === saboresModal) {
+        toggleSaboresModal();
+    }
+    
+    if (e.target === selecaoModal) {
+        closeSelecaoSabores();
+    }
+});
 
