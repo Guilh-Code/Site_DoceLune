@@ -237,27 +237,33 @@ function updateQuantity(name, change) {
 function calcularPromocoes() {
     let subtotalComPromocao = 0;
     let promocoesAplicadas = [];
-    
-    // Encontrar caixinhas no carrinho
-    const caixinha4 = cart.find(item => item.name === 'Caixinha 4 unidades');
-    const caixinha6 = cart.find(item => item.name === 'Caixinha 6 unidades');
-    
+
+    // Agrupar itens do carrinho pelo nome para calcular promoções
+    const groupedCart = cart.reduce((acc, item) => {
+        if (!acc[item.name]) {
+            acc[item.name] = { ...item, quantity: 0 };
+        }
+        acc[item.name].quantity += item.quantity;
+        return acc;
+    }, {});
+
+    // Encontrar caixinhas no carrinho (agora agrupadas)
+    const caixinha4 = groupedCart["Caixinha 4 unidades"];
+    const caixinha6 = groupedCart["Caixinha 6 unidades"];
+
     // Aplicar promoções para caixinha 4 unidades
     if (caixinha4) {
         const quantidade = caixinha4.quantity;
         const precoOriginal = caixinha4.price;
-        
+
         if (quantidade >= 2) {
-            // Calcular quantos pares de 2 caixinhas temos
             const pares = Math.floor(quantidade / 2);
             const restantes = quantidade % 2;
-            
-            // Preço promocional: 2 caixinhas por R$ 20
             const precoPromocional = pares * 20 + restantes * precoOriginal;
             const desconto = (quantidade * precoOriginal) - precoPromocional;
-            
+
             subtotalComPromocao += precoPromocional;
-            
+
             if (desconto > 0) {
                 promocoesAplicadas.push({
                     item: 'Caixinha 4 unidades',
@@ -269,23 +275,20 @@ function calcularPromocoes() {
             subtotalComPromocao += quantidade * precoOriginal;
         }
     }
-    
+
     // Aplicar promoções para caixinha 6 unidades
     if (caixinha6) {
         const quantidade = caixinha6.quantity;
         const precoOriginal = caixinha6.price;
-        
+
         if (quantidade >= 2) {
-            // Calcular quantos pares de 2 caixinhas temos
             const pares = Math.floor(quantidade / 2);
             const restantes = quantidade % 2;
-            
-            // Preço promocional: 2 caixinhas por R$ 32
             const precoPromocional = pares * 32 + restantes * precoOriginal;
             const desconto = (quantidade * precoOriginal) - precoPromocional;
-            
+
             subtotalComPromocao += precoPromocional;
-            
+
             if (desconto > 0) {
                 promocoesAplicadas.push({
                     item: 'Caixinha 6 unidades',
@@ -297,14 +300,16 @@ function calcularPromocoes() {
             subtotalComPromocao += quantidade * precoOriginal;
         }
     }
-    
-    // Adicionar outros itens que não são caixinhas
+
+    // Adicionar outros itens que não são caixinhas ou que não foram agrupados
     cart.forEach(item => {
         if (item.name !== 'Caixinha 4 unidades' && item.name !== 'Caixinha 6 unidades') {
             subtotalComPromocao += item.price * item.quantity;
+        } else if (!groupedCart[item.name]) { // Adicionar itens que não foram agrupados (caso haja)
+            subtotalComPromocao += item.price * item.quantity;
         }
     });
-    
+
     return {
         subtotalComPromocao,
         promocoesAplicadas
