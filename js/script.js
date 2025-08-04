@@ -1,15 +1,11 @@
 // Variáveis globais
 let cart = [];
-let cartTotal = 0;
-let freteValue = 0;
 
 // Elementos DOM
 const cartSidebar = document.getElementById('cartSidebar');
 const cartItems = document.getElementById('cartItems');
 const cartCount = document.getElementById('cartCount');
 const cartTotalElement = document.getElementById('cartTotal');
-const cartSubtotalElement = document.getElementById('cartSubtotal');
-const freteDisplayElement = document.getElementById('freteDisplay');
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
@@ -237,13 +233,91 @@ function updateQuantity(name, change) {
     }
 }
 
+// Função para calcular promoções das caixinhas
+function calcularPromocoes() {
+    let subtotalComPromocao = 0;
+    let promocoesAplicadas = [];
+    
+    // Encontrar caixinhas no carrinho
+    const caixinha4 = cart.find(item => item.name === 'Caixinha 4 unidades');
+    const caixinha6 = cart.find(item => item.name === 'Caixinha 6 unidades');
+    
+    // Aplicar promoções para caixinha 4 unidades
+    if (caixinha4) {
+        const quantidade = caixinha4.quantity;
+        const precoOriginal = caixinha4.price;
+        
+        if (quantidade >= 2) {
+            // Calcular quantos pares de 2 caixinhas temos
+            const pares = Math.floor(quantidade / 2);
+            const restantes = quantidade % 2;
+            
+            // Preço promocional: 2 caixinhas por R$ 20
+            const precoPromocional = pares * 20 + restantes * precoOriginal;
+            const desconto = (quantidade * precoOriginal) - precoPromocional;
+            
+            subtotalComPromocao += precoPromocional;
+            
+            if (desconto > 0) {
+                promocoesAplicadas.push({
+                    item: 'Caixinha 4 unidades',
+                    descricao: `${pares} par(es) de caixinhas por R$ 20,00 cada`,
+                    desconto: desconto
+                });
+            }
+        } else {
+            subtotalComPromocao += quantidade * precoOriginal;
+        }
+    }
+    
+    // Aplicar promoções para caixinha 6 unidades
+    if (caixinha6) {
+        const quantidade = caixinha6.quantity;
+        const precoOriginal = caixinha6.price;
+        
+        if (quantidade >= 2) {
+            // Calcular quantos pares de 2 caixinhas temos
+            const pares = Math.floor(quantidade / 2);
+            const restantes = quantidade % 2;
+            
+            // Preço promocional: 2 caixinhas por R$ 32
+            const precoPromocional = pares * 32 + restantes * precoOriginal;
+            const desconto = (quantidade * precoOriginal) - precoPromocional;
+            
+            subtotalComPromocao += precoPromocional;
+            
+            if (desconto > 0) {
+                promocoesAplicadas.push({
+                    item: 'Caixinha 6 unidades',
+                    descricao: `${pares} par(es) de caixinhas por R$ 32,00 cada`,
+                    desconto: desconto
+                });
+            }
+        } else {
+            subtotalComPromocao += quantidade * precoOriginal;
+        }
+    }
+    
+    // Adicionar outros itens que não são caixinhas
+    cart.forEach(item => {
+        if (item.name !== 'Caixinha 4 unidades' && item.name !== 'Caixinha 6 unidades') {
+            subtotalComPromocao += item.price * item.quantity;
+        }
+    });
+    
+    return {
+        subtotalComPromocao,
+        promocoesAplicadas
+    };
+}
+
 // Função para atualizar display do carrinho
 function updateCartDisplay() {
     // Limpar itens atuais
     cartItems.innerHTML = '';
     
-    // Calcular subtotal
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Calcular promoções
+    const { subtotalComPromocao, promocoesAplicadas } = calcularPromocoes();
     
     if (cart.length === 0) {
         cartItems.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Seu carrinho está vazio</p>';
@@ -272,25 +346,39 @@ function updateCartDisplay() {
             `;
             cartItems.appendChild(cartItem);
         });
+        
+        // Mostrar promoções aplicadas
+        if (promocoesAplicadas.length > 0) {
+            const promocoesDiv = document.createElement('div');
+            promocoesDiv.style.cssText = `
+                background: #e8f5e8;
+                border: 1px solid #4caf50;
+                border-radius: 8px;
+                padding: 10px;
+                margin-top: 15px;
+            `;
+            
+            let promocoesHTML = '<h5 style="color: #2e7d32; margin: 0 0 8px 0;">🎉 Promoções Aplicadas:</h5>';
+            promocoesAplicadas.forEach(promocao => {
+                promocoesHTML += `<p style="margin: 4px 0; font-size: 0.9rem; color: #2e7d32;">
+                    • ${promocao.descricao}<br>
+                    <span style="font-weight: bold;">Economia: R$ ${promocao.desconto.toFixed(2).replace('.', ',')}</span>
+                </p>`;
+            });
+            
+            promocoesDiv.innerHTML = promocoesHTML;
+            cartItems.appendChild(promocoesDiv);
+        }
     }
     
     // Atualizar totais
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const finalTotal = subtotal + freteValue;
     
     cartCount.textContent = totalItems;
-    cartSubtotalElement.textContent = subtotal.toFixed(2).replace('.', ',');
-    cartTotalElement.textContent = finalTotal.toFixed(2).replace('.', ',');
+    cartTotalElement.textContent = subtotalComPromocao.toFixed(2).replace('.', ',');
     
     // Mostrar/esconder elementos
     cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
-    
-    if (freteValue > 0) {
-        document.getElementById('freteTotal').style.display = 'flex';
-        freteDisplayElement.textContent = freteValue.toFixed(2).replace('.', ',');
-    } else {
-        document.getElementById('freteTotal').style.display = 'none';
-    }
 }
 
 // Função para calcular frete por CEP
@@ -310,6 +398,35 @@ async function calcularFrete() {
     freteBtn.disabled = true;
     
     try {
+        // CEP da cliente DoceLune (Bia)
+        const cepOrigem = '03461080'; // CEP da Bia sem hífen
+        
+        // Verificar se é o mesmo CEP da origem (frete grátis)
+        if (cep === cepOrigem) {
+            freteValue = 0;
+            
+            // Mostrar resultado de frete grátis
+            document.getElementById('freteResult').style.display = 'block';
+            document.getElementById('freteResult').innerHTML = `
+                <div style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 15px; margin-top: 10px;">
+                    <strong style="color: #2e7d32;">🎉 Frete GRÁTIS!</strong>
+                    <button onclick="removerFrete()" class="remove-frete-btn" title="Remover frete">✕</button><br>
+                    <span style="color: #666; font-size: 0.9rem;">Entrega no mesmo local da confeitaria</span>
+                </div>
+            `;
+            
+            updateCartDisplay();
+            showToast('Frete grátis! Mesmo local da confeitaria', 'success');
+            
+            // Salvar CEP do cliente para usar no WhatsApp
+            localStorage.setItem('docelune_cliente_cep', cep);
+            
+            // Restaurar botão
+            freteBtn.innerHTML = originalText;
+            freteBtn.disabled = false;
+            return;
+        }
+        
         // Primeiro verificar se o CEP é de São Paulo - SP
         const viaCepResponse = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
         const viaCepData = await viaCepResponse.json();
@@ -318,7 +435,7 @@ async function calcularFrete() {
             throw new Error('CEP não encontrado');
         }
         
-        // Verificar se é de São Paulo - SP
+        // Verificar se é de São Paulo - SP (onde a Bia atende)
         if (viaCepData.localidade.toLowerCase() !== 'são paulo' || viaCepData.uf.toLowerCase() !== 'sp') {
             // Mostrar mensagem de área não atendida
             document.getElementById('freteResult').style.display = 'block';
@@ -326,17 +443,18 @@ async function calcularFrete() {
                 <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px; margin-top: 10px;">
                     <i class="fas fa-exclamation-triangle" style="color: #f44336; margin-right: 8px;"></i>
                     <strong style="color: #f44336;">Área de entrega não atendida</strong><br>
-                    <span style="color: #666; font-size: 0.9rem;">Realizamos entregas apenas na cidade de São Paulo - SP</span>
+                    <span style="color: #666; font-size: 0.9rem;">Realizamos entregas apenas na região de São Paulo - SP, próximo ao Jardim Vila Formosa</span>
                 </div>
             `;
             freteValue = 0;
             updateCartDisplay();
             showToast('Entregas apenas em São Paulo - SP', 'error');
+            
+            // Restaurar botão
+            freteBtn.innerHTML = originalText;
+            freteBtn.disabled = false;
             return;
         }
-        
-        // CEP da cliente DoceLune (não exposto no frontend)
-        const cepOrigem = '03461080'; // CEP da cliente sem hífen
         
         // Buscar coordenadas dos CEPs
         const coordOrigem = await buscarCoordenadasPorCEP(cepOrigem);
@@ -349,7 +467,28 @@ async function calcularFrete() {
                 coordDestino.lat, coordDestino.lng
             );
             
-            if (distancia > 0) {
+            if (distancia >= 0) {
+                // Verificar se a distância está dentro do limite de 30km
+                if (distancia > 30) {
+                    // Mostrar mensagem de distância excedida
+                    document.getElementById('freteResult').style.display = 'block';
+                    document.getElementById('freteResult').innerHTML = `
+                        <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 8px; padding: 15px; margin-top: 10px;">
+                            <i class="fas fa-exclamation-triangle" style="color: #f44336; margin-right: 8px;"></i>
+                            <strong style="color: #f44336;">Não entregamos para esta região</strong><br>
+                            <span style="color: #666; font-size: 0.9rem;">Realizamos entregas apenas em um raio de 30km do CEP 03461-080. Distância: ${distancia.toFixed(1)} km</span>
+                        </div>
+                    `;
+                    freteValue = 0;
+                    updateCartDisplay();
+                    showToast(`Distância de ${distancia.toFixed(1)} km excede o limite de 30km`, 'error');
+                    
+                    // Restaurar botão
+                    freteBtn.innerHTML = originalText;
+                    freteBtn.disabled = false;
+                    return;
+                }
+                
                 // Frete = R$ 0,80 por km (ida e volta)
                 freteValue = distancia * 0.80 * 2; // Multiplicar por 2 para ida e volta
                 
@@ -359,7 +498,7 @@ async function calcularFrete() {
                     <div style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 15px; margin-top: 10px;">
                         <strong style="color: #2e7d32;">Frete: R$ ${freteValue.toFixed(2).replace('.', ',')}</strong>
                         <button onclick="removerFrete()" class="remove-frete-btn" title="Remover frete">✕</button><br>
-                        <span style="color: #666; font-size: 0.9rem;">Distância aproximada: ${distancia.toFixed(1)} km</span>
+                        <span style="color: #666; font-size: 0.9rem;">Distância aproximada: ${distancia.toFixed(1)} km (ida e volta)</span>
                     </div>
                 `;
                 
@@ -377,6 +516,11 @@ async function calcularFrete() {
     } catch (error) {
         console.error('Erro ao calcular frete:', error);
         showToast('CEP não encontrado ou erro no cálculo. Verifique o CEP digitado.', 'error');
+        
+        // Limpar resultado anterior
+        document.getElementById('freteResult').style.display = 'none';
+        freteValue = 0;
+        updateCartDisplay();
     } finally {
         // Restaurar botão
         freteBtn.innerHTML = originalText;
@@ -519,11 +663,42 @@ function sendToWhatsApp() {
         return;
     }
     
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const total = subtotal + freteValue;
-    const clienteCep = localStorage.getItem('docelune_cliente_cep') || '';
+    // Obter dados dos campos de endereço
+    const nomeInput = document.getElementById('nomeInput');
+    const enderecoInput = document.getElementById('enderecoInput');
+    const cepInput = document.getElementById('cepInput');
+    
+    const nome = nomeInput ? nomeInput.value.trim() : '';
+    const endereco = enderecoInput ? enderecoInput.value.trim() : '';
+    const cep = cepInput ? cepInput.value.trim() : '';
+    
+    // Validar se os campos obrigatórios estão preenchidos
+    if (!nome) {
+        showToast('Por favor, preencha seu nome!', 'error');
+        return;
+    }
+    
+    if (!endereco) {
+        showToast('Por favor, preencha o endereço completo!', 'error');
+        return;
+    }
+    
+    if (!cep) {
+        showToast('Por favor, preencha o CEP!', 'error');
+        return;
+    }
+    
+    // Calcular promoções
+    const { subtotalComPromocao, promocoesAplicadas } = calcularPromocoes();
     
     let message = '🍰 *Pedido DoceLune* 🍰\n\n';
+    
+    // Dados do cliente
+    message += '👤 *Dados do Cliente:*\n';
+    message += `• Nome: ${nome}\n`;
+    message += `• Endereço: ${endereco}\n`;
+    message += `• CEP: ${cep}\n\n`;
+    
     message += '📋 *Itens do pedido:*\n';
     
     cart.forEach(item => {
@@ -533,14 +708,17 @@ function sendToWhatsApp() {
         message += `  Subtotal: R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n\n`;
     });
     
-    message += `💰 *Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}*\n`;
-    
-    if (freteValue > 0 && clienteCep) {
-        message += `🚚 *Frete: R$ ${freteValue.toFixed(2).replace('.', ',')}*\n`;
-        message += `📍 *CEP do cliente: ${clienteCep.replace(/(\d{5})(\d{3})/, '$1-$2')}*\n`;
+    // Mostrar promoções aplicadas
+    if (promocoesAplicadas.length > 0) {
+        message += '🎉 *Promoções Aplicadas:*\n';
+        promocoesAplicadas.forEach(promocao => {
+            message += `• ${promocao.descricao}\n`;
+            message += `  Economia: R$ ${promocao.desconto.toFixed(2).replace('.', ',')}\n`;
+        });
+        message += '\n';
     }
     
-    message += `💵 *Total do pedido: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+    message += `💵 *Total do pedido: R$ ${subtotalComPromocao.toFixed(2).replace('.', ',')}*\n\n`;
     
     message += '💳 *Condições de Pagamento:*\n';
     message += '• PIX: (11) 98558-0560\n';
@@ -558,24 +736,14 @@ function sendToWhatsApp() {
 // Função para salvar carrinho no localStorage
 function saveCartToStorage() {
     localStorage.setItem('docelune_cart', JSON.stringify(cart));
-    localStorage.setItem('docelune_frete', freteValue.toString());
 }
 
 // Função para carregar carrinho do localStorage
 function loadCartFromStorage() {
     const savedCart = localStorage.getItem('docelune_cart');
-    const savedFrete = localStorage.getItem('docelune_frete');
     
     if (savedCart) {
         cart = JSON.parse(savedCart);
-    }
-    
-    if (savedFrete) {
-        freteValue = parseFloat(savedFrete);
-        if (freteValue > 0) {
-            document.getElementById('freteResult').style.display = 'block';
-            document.getElementById('freteValue').textContent = freteValue.toFixed(2).replace('.', ',');
-        }
     }
     
     updateCartDisplay();
@@ -584,12 +752,17 @@ function loadCartFromStorage() {
 // Função para limpar carrinho
 function clearCart() {
     cart = [];
-    freteValue = 0;
     updateCartDisplay();
     saveCartToStorage();
-    document.getElementById('freteResult').style.display = 'none';
-    document.getElementById('cepInput').value = '';
-    localStorage.removeItem('docelune_cliente_cep');
+    
+    // Limpar campos de endereço
+    const nomeInput = document.getElementById('nomeInput');
+    const enderecoInput = document.getElementById('enderecoInput');
+    const cepInput = document.getElementById('cepInput');
+    
+    if (nomeInput) nomeInput.value = '';
+    if (enderecoInput) enderecoInput.value = '';
+    if (cepInput) cepInput.value = '';
 }
 
 // Efeitos de scroll na navbar

@@ -37,6 +37,7 @@ body {
     max-width: var(--container-max-width);
     margin: 0 auto;
     padding: 0 20px;
+    width: 100%;
 }
 
 /* Navegação */
@@ -297,61 +298,52 @@ body {
 }
 
 .cart-footer {
-    padding: 20px;
+    padding: 20px 20px 40px 20px;
     border-top: 1px solid var(--light-gray);
 }
 
-.frete-section {
+/* Ajuste específico para telas menores */
+@media (max-width: 768px) {
+    .cart-footer {
+        padding: 20px 20px 80px 20px;
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+    
+    .cart-sidebar {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .cart-sidebar.active {
+        right: 0;
+    }
+}
+
+.endereco-section {
     margin-bottom: 20px;
     padding: 15px;
     background: var(--light-gray);
     border-radius: var(--border-radius);
 }
 
-.frete-section h4 {
+.endereco-section h4 {
     margin-bottom: 15px;
     color: var(--accent-pink);
     font-size: 1.1rem;
 }
 
-.frete-input-group {
+.endereco-input-group {
     display: flex;
+    flex-direction: column;
     gap: 10px;
-    margin-bottom: 10px;
 }
 
-.frete-input {
-    flex: 1;
+.endereco-input {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 14px;
-}
-
-.frete-btn {
-    background: var(--secondary-mint);
-    color: var(--white);
-    border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.frete-btn:hover {
-    background: var(--dark-mint);
-    transform: translateY(-2px);
-}
-
-.frete-result {
-    background: var(--white);
-    padding: 10px;
-    border-radius: 8px;
-    border-left: 4px solid var(--secondary-mint);
 }
 
 .cart-totals {
@@ -413,7 +405,7 @@ body {
     padding: 0 20px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 90px;
+    gap: 100px;
     align-items: center;
     z-index: 2;
     position: relative;
@@ -481,7 +473,7 @@ body {
 
 .hero-image img {
     width: 100%;
-    max-width: 550px;
+    max-width: 400px;
     height: auto;
 }
 
@@ -1090,6 +1082,23 @@ body {
     .hero-text h1 {
         font-size: 2.5rem;
     }
+
+    .hero-image {
+        /* Remove o efeito de hover em telas pequenas para melhor usabilidade mobile */
+        transition: none;
+        transform: none;
+    }
+
+    .hero-image:hover {
+        transform: none;
+    }
+
+    .hero-image img {
+        /* Garante que a imagem se ajuste ao container */
+        max-width: 80%;
+        /* Adiciona um espaçamento acima da imagem para separá-la do texto */
+        margin-top: 20px;
+    }
     
     .sobre-content {
         grid-template-columns: 1fr;
@@ -1149,4 +1158,8 @@ body {
         margin: 0 10px;
     }
 }
+
+
+
+
 

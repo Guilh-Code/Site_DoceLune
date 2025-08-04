@@ -49,28 +49,18 @@
             <!-- Itens do carrinho serão inseridos aqui -->
         </div>
         <div class="cart-footer">
-            <div class="frete-section">
-                <h4>Calcular Frete</h4>
-                <div class="frete-input-group">
-                    <input type="text" id="cepInput" placeholder="Digite seu CEP (ex: 01234-567)" class="frete-input" maxlength="9">
-                    <button onclick="calcularFrete()" class="frete-btn">
-                        📊
-                        Calcular
-                    </button>
-                </div>
-                <div class="frete-result" id="freteResult" style="display: none;">
-                    <p>Frete: R$ <span id="freteValue">0,00</span>
-                        <button onclick="removerFrete()" class="remove-frete-btn" title="Remover frete">✕</button>
-                    </p>
+            <div class="endereco-section">
+                <h4>Dados para Entrega</h4>
+                <div class="endereco-input-group">
+                    <input type="text" id="nomeInput" placeholder="Seu nome completo" class="endereco-input" style="width: 100%; margin-bottom: 10px;">
+                    <input type="text" id="enderecoInput" placeholder="Endereço completo com número" class="endereco-input" style="width: 100%; margin-bottom: 10px;">
+                    <input type="text" id="cepInput" placeholder="CEP (ex: 01234-567)" class="endereco-input" maxlength="9" style="width: 100%;">
+                    <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display: block;">
+                        * Essas informações serão incluídas no seu pedido para WhatsApp
+                    </small>
                 </div>
             </div>
             <div class="cart-totals">
-                <div class="subtotal">
-                    Subtotal: R$ <span id="cartSubtotal">0,00</span>
-                </div>
-                <div class="frete-total" id="freteTotal" style="display: none;">
-                    Frete: R$ <span id="freteDisplay">0,00</span>
-                </div>
                 <div class="cart-total">
                     <strong>Total: R$ <span id="cartTotal">0,00</span></strong>
                 </div>
@@ -150,6 +140,9 @@
                             <h4>Caixinha 4 unidades</h4>
                             <p>Brigadeiros especiais em caixinha</p>
                             <div class="produto-preco">R$ 12,00</div>
+                            <div class="promocao-info" style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 8px; margin: 10px 0; font-size: 0.85rem; color: #2e7d32;">
+                                🎉 <strong>Promoção:</strong> 2 caixinhas por R$ 20,00
+                            </div>
                             <button class="add-to-cart" onclick="addToCart('Caixinha 4 unidades', 12.00, 'assets/brigadeiro_colorido.jpg')">
                                 + Adicionar
                             </button>
@@ -162,6 +155,9 @@
                             <h4>Caixinha 6 unidades</h4>
                             <p>Brigadeiros especiais em caixinha</p>
                             <div class="produto-preco">R$ 18,00</div>
+                            <div class="promocao-info" style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 8px; margin: 10px 0; font-size: 0.85rem; color: #2e7d32;">
+                                🎉 <strong>Promoção:</strong> 2 caixinhas por R$ 32,00
+                            </div>
                             <button class="add-to-cart" onclick="addToCart('Caixinha 6 unidades', 18.00, 'assets/beijinho.jpg')">
                                 + Adicionar
                             </button>
