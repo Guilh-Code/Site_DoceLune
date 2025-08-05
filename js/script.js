@@ -744,13 +744,11 @@ function openSaboresSelection(name, price, image, quantity) {
             <div class="sabor-selector" id="selector-${sabor.id}">
                 <div class="sabor-selector-header">
                     <h4>${sabor.emoji} ${sabor.nome}</h4>
-                    <input type="number" 
-                           class="quantity-input" 
-                           id="qty-${sabor.id}" 
-                           min="0" 
-                           max="${quantity}" 
-                           value="0"
-                           onchange="updateSaborQuantity('${sabor.id}', this.value)">
+                    <div class="quantity-controls-sabor">
+                        <button class="quantity-btn-sabor" onclick="changeSaborQuantity('${sabor.id}', -1)">-</button>
+                        <span class="quantity-display" id="qty-${sabor.id}">0</span>
+                        <button class="quantity-btn-sabor" onclick="changeSaborQuantity('${sabor.id}', 1)">+</button>
+                    </div>
                 </div>
                 <p>${sabor.descricao}</p>
             </div>
@@ -764,7 +762,32 @@ function openSaboresSelection(name, price, image, quantity) {
     updateQuantidadeRestante();
 }
 
-// Função para atualizar quantidade de sabor
+// Função para alterar quantidade de sabor com botões +/-
+function changeSaborQuantity(saborId, change) {
+    const currentQty = currentSelection.sabores[saborId] || 0;
+    const newQty = Math.max(0, currentQty + change);
+    
+    // Verificar se não excede o limite total
+    const totalSelecionado = Object.values(currentSelection.sabores).reduce((sum, qty) => sum + qty, 0);
+    const totalSemEste = totalSelecionado - currentQty;
+    
+    if (newQty > 0 && (totalSemEste + newQty) <= currentSelection.quantity) {
+        currentSelection.sabores[saborId] = newQty;
+        document.getElementById(`selector-${saborId}`).classList.add('selected');
+    } else if (newQty === 0) {
+        delete currentSelection.sabores[saborId];
+        document.getElementById(`selector-${saborId}`).classList.remove('selected');
+    } else {
+        // Não permitir exceder o limite
+        return;
+    }
+    
+    // Atualizar display
+    document.getElementById(`qty-${saborId}`).textContent = currentSelection.sabores[saborId] || 0;
+    updateQuantidadeRestante();
+}
+
+// Função para atualizar quantidade de sabor (mantida para compatibilidade)
 function updateSaborQuantity(saborId, quantidade) {
     const qty = parseInt(quantidade) || 0;
     
@@ -799,16 +822,6 @@ function updateQuantidadeRestante() {
         }
     }
     
-    // Atualizar inputs máximos
-    saboresDisponiveis.forEach(sabor => {
-        const input = document.getElementById(`qty-${sabor.id}`);
-        if (input) {
-            const currentValue = parseInt(input.value) || 0;
-            const maxAllowed = currentValue + restante;
-            input.max = maxAllowed;
-        }
-    });
-    
     // Habilitar/desabilitar botão confirmar
     const btnConfirmar = document.querySelector('.btn-confirmar');
     if (btnConfirmar) {
@@ -822,7 +835,16 @@ function closeSelecaoSabores() {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
     
-    // Limpar seleção
+    // Resetar seleção
+    saboresDisponiveis.forEach(sabor => {
+        const display = document.getElementById(`qty-${sabor.id}`);
+        if (display) {
+            display.textContent = '0';
+        }
+        document.getElementById(`selector-${sabor.id}`)?.classList.remove('selected');
+    });
+    
+    // Resetar currentSelection
     currentSelection = {
         name: '',
         price: 0,
