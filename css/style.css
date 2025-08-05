@@ -860,14 +860,21 @@ body {
     transform: scale(1.1);
 }
 
-/* Contato Section */
+/* Contato Section - Opção 1: Fundo Sólido */
 .contato {
     padding: var(--section-padding);
-    background: linear-gradient(135deg, var(--primary-pink), var(--secondary-mint));
-    color: var(--white);
+    /* Mudança aqui: cor de fundo sólida */
+    background-color: var(--light-pink);
+    color: var(--dark-text); /* Altera a cor do texto para o escuro para melhor contraste */
     text-align: center;
 }
 
+.contato h2,
+.contato p {
+    color: var(--dark-text); /* Garante que o texto seja escuro */
+}
+
+/* O resto do CSS da seção de contato permanece o mesmo */
 .contato h2 {
     font-size: 2.5rem;
     margin-bottom: 20px;
@@ -915,10 +922,9 @@ body {
 }
 
 .payment-info {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.8);
     padding: 30px;
     border-radius: var(--border-radius);
-    backdrop-filter: blur(10px);
     max-width: 600px;
     margin: 0 auto;
 }
